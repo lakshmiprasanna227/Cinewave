@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CineWave - Stream Movies Online{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Hero Banner (Featured Movie) -->
+{% if featured %}
+<section class="hero-banner" id="hero">
+    <div class="hero-backdrop">
+        {% if featured_thumbnail %}
+            <img src="{{ featured_thumbnail }}" alt="{{ featured.title }}" class="hero-bg">
+        {% else %}
+            <!-- Fallback: gradient background -->
+            <div class="hero-gradient"></div>
+        {% endif %}
+        <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+        <h1 class="hero-title">{{ featured.title }}</h1>
+        <p class="hero-description">{{ featured.description|truncatechars:200 }}</p>
+        <div class="hero-meta">
+            <span class="rating"><i class="fas fa-star"></i> {{ featured.rating }}/10</span>
+            <span class="year">{{ featured.year }}</span>
+            <span class="genre">{{ featured.get_genre_display }}</span>
+            <span class="duration">{{ featured.duration }} min</span>
+        </div>
+        <div class="hero-buttons">
+            <a href="{% url 'watch_video' featured.id %}" class="btn btn-play">
+                <i class="fas fa-play"></i> Play
+            </a>
+            <a href="{% url 'movie_detail' featured.id %}" class="btn btn-info">
+                <i class="fas fa-info-circle"></i> More Info
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Movie Rows -->
+<div class="movies-container" id="movies">
+    
+    <!-- Trending Movies -->
+    {% if trending_movies %}
+    <section class="movie-row">
+        <h2 class="row-title">
+            <i class="fas fa-fire"></i> Trending Now
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('trending')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="trending-row">
+                {% for movie in trending_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('trending', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- New & Popular -->
+    {% if new_popular_movies %}
+    <section class="movie-row" id="new-popular">
+        <h2 class="row-title">
+            <i class="fas fa-bolt"></i> New & Popular
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('new-popular')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="new-popular-row">
+                {% for movie in new_popular_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('new-popular', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- TV Shows -->
+    <section class="movie-row" id="tv-shows">
+        <h2 class="row-title">
+            <i class="fas fa-tv"></i> TV Shows
+        </h2>
+        <div class="empty-row-message">
+            TV shows are not available yet.
+        </div>
+    </section>
+
+    <!-- Action Movies -->
+    {% if action_movies %}
+    <section class="movie-row">
+        <h2 class="row-title">
+            <i class="fas fa-bomb"></i> Action
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('action')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="action-row">
+                {% for movie in action_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('action', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Comedy Movies -->
+    {% if comedy_movies %}
+    <section class="movie-row">
+        <h2 class="row-title">
+            <i class="fas fa-laugh-squint"></i> Comedy
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('comedy')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="comedy-row">
+                {% for movie in comedy_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('comedy', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Drama Movies -->
+    {% if drama_movies %}
+    <section class="movie-row">
+        <h2 class="row-title">
+            <i class="fas fa-theater-masks"></i> Drama
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('drama')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="drama-row">
+                {% for movie in drama_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('drama', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Sci-Fi Movies -->
+    {% if sci_fi_movies %}
+    <section class="movie-row">
+        <h2 class="row-title">
+            <i class="fas fa-robot"></i> Sci-Fi
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('sci-fi')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="sci-fi-row">
+                {% for movie in sci_fi_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('sci-fi', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Horror Movies -->
+    {% if horror_movies %}
+    <section class="movie-row">
+        <h2 class="row-title">
+            <i class="fas fa-ghost"></i> Horror
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('horror')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="horror-row">
+                {% for movie in horror_movies %}
+                <div class="movie-card" data-id="{{ movie.id }}">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        {% if movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-overlay">
+                            <div class="card-info">
+                                <h3>{{ movie.title }}</h3>
+                                <div class="card-meta">
+                                    <span>{{ movie.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ movie.rating }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('horror', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Recommendations -->
+    <section class="movie-row" id="recommendations-row">
+        <h2 class="row-title">
+            <i class="fas fa-thumbs-up"></i> Recommended For You
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('recommendations')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="recommendations-content">
+                <!-- Loaded dynamically via JavaScript -->
+                <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i> Loading recommendations...
+                </div>
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('recommendations', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- My List (if user is logged in) -->
+    {% if user.is_authenticated %}
+    <section class="movie-row" id="my-list-row">
+        <h2 class="row-title">
+            <i class="fas fa-plus-square"></i> My List
+        </h2>
+        <div class="row-content">
+            <button class="scroll-btn scroll-left" onclick="scrollRow('my-list')">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="movie-cards" id="my-list-content">
+                <!-- Loaded dynamically via JavaScript -->
+                <div class="loading-placeholder">
+                    <i class="fas fa-spinner fa-spin"></i> Loading your list...
+                </div>
+            </div>
+            <button class="scroll-btn scroll-right" onclick="scrollRow('my-list', 'right')">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+
+<!-- Search Results Modal -->
+<div class="search-modal" id="searchModal">
+    <div class="search-modal-content">
+        <span class="close-search" onclick="closeSearch()">&times;</span>
+        <h2>Search Results</h2>
+        <div id="searchResultsContainer"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/home.js' %}"></script>
+{% endblock %}

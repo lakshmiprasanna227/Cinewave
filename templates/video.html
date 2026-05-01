@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Watching: {{ movie.title }} - CineWave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/video.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Video Player Page -->
+<div class="video-page">
+    <!-- Navigation (compact) -->
+    <nav class="video-nav">
+        <a href="{% url 'home' %}" class="back-home">
+            <i class="fas fa-arrow-left"></i> Back to Browse
+        </a>
+        <h1 class="video-title">{{ movie.title }}</h1>
+        <a href="{% url 'movie_detail' movie.id %}" class="movie-details-link">
+            <i class="fas fa-info-circle"></i> Details
+        </a>
+    </nav>
+
+    <!-- Video Player Container -->
+    <div class="video-container">
+        <div class="video-wrapper" id="videoWrapper">
+            {% if youtube_embed_url %}
+            <iframe
+                class="youtube-player"
+                src="{{ youtube_embed_url }}"
+                title="{{ movie.title }}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+            {% else %}
+            <!-- Video Element -->
+            <video id="videoPlayer" class="video-player" playsinline controls controlsList="nodownload">
+                <source src="{% url 'stream_video' movie.id %}" type="video/mp4">
+                <p>Your browser does not support the video tag. <a href="{% url 'stream_video' movie.id %}">Download video</a></p>
+            </video>
+            
+            <!-- Custom Controls -->
+            <div class="video-controls" id="videoControls">
+                <!-- Progress Bar -->
+                <div class="progress-container">
+                    <input type="range" class="progress-bar" id="progressBar" 
+                           min="0" max="100" value="0">
+                    <div class="progress-buffered" id="progressBuffered"></div>
+                    <div class="progress-filled" id="progressFilled"></div>
+                    <div class="progress-thumb" id="progressThumb"></div>
+                </div>
+                
+                <!-- Control Buttons -->
+                <div class="controls-row">
+                    <div class="controls-left">
+                        <button class="control-btn" id="playPauseBtn" onclick="togglePlay()">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        
+                        <button class="control-btn" onclick="skip(-10)">
+                            <i class="fas fa-undo-10"></i>
+                        </button>
+                        
+                        <button class="control-btn" onclick="skip(10)">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        
+                        <button class="control-btn" onclick="toggleMute()">
+                            <i class="fas fa-volume-up" id="volumeIcon"></i>
+                        </button>
+                        
+                        <input type="range" class="volume-slider" id="volumeSlider" 
+                               min="0" max="100" value="100" onchange="setVolume(this.value)">
+                        
+                        <span class="time-display">
+                            <span id="currentTime">0:00</span> / 
+                            <span id="duration">0:00</span>
+                        </span>
+                    </div>
+                    
+                    <div class="controls-right">
+                        <button class="control-btn" onclick="toggleCaptions()">
+                            <i class="fas fa-closed-captioning"></i>
+                        </button>
+                        
+                        <button class="control-btn" onclick="togglePiP()">
+                            <i class="fas fa-picture-in-picture"></i>
+                        </button>
+                        
+                        <button class="control-btn" onclick="toggleFullscreen()">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div class="video-loading" id="videoLoading">
+                <div class="loading-spinner"></div>
+            </div>
+            
+            <!-- Big Play Button (initial state) -->
+            <div class="big-play-btn" id="bigPlayBtn" onclick="playVideo()">
+                <i class="fas fa-play"></i>
+            </div>
+            
+            <!-- Error Message -->
+            <div class="video-error" id="videoError" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Unable to load video. Please try again later.</p>
+                <a href="{% url 'movie_detail' movie.id %}" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Back to Details
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Movie Info Bar -->
+    <div class="video-info-bar">
+        <div class="info-left">
+            <h2>{{ movie.title }}</h2>
+            <p>{{ movie.description|truncatechars:150 }}</p>
+        </div>
+        <div class="info-right">
+            <span class="genre">{{ movie.get_genre_display }}</span>
+            <span class="rating"><i class="fas fa-star"></i> {{ movie.rating }}</span>
+            <span class="year">{{ movie.year }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Keyboard Shortcuts Modal -->
+<div class="shortcuts-modal" id="shortcutsModal">
+    <div class="shortcuts-content">
+        <span class="close-modal" onclick="closeShortcuts()">&times;</span>
+        <h2>Keyboard Shortcuts</h2>
+        <div class="shortcuts-grid">
+            <div class="shortcut">
+                <span class="key">Space</span>
+                <span class="action">Play/Pause</span>
+            </div>
+            <div class="shortcut">
+                <span class="key">F</span>
+                <span class="action">Fullscreen</span>
+            </div>
+            <div class="shortcut">
+                <span class="key">M</span>
+                <span class="action">Mute/Unmute</span>
+            </div>
+            <div class="shortcut">
+                <span class="key">←</span>
+                <span class="action">Skip -10s</span>
+            </div>
+            <div class="shortcut">
+                <span class="key">→</span>
+                <span class="action">Skip +10s</span>
+            </div>
+            <div class="shortcut">
+                <span class="key">↑</span>
+                <span class="action">Volume +</span>
+            </div>
+            <div class="shortcut">
+                <span class="key">↓</span>
+                <span class="action">Volume -</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/video.js' %}"></script>
+{% if not youtube_embed_url %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initVideoPlayer();
+        
+        // Also try immediately in case DOM is already loaded
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            initVideoPlayer();
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

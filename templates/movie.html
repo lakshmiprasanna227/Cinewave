@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ movie.title }} - CineWave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/movie.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Movie Detail Hero -->
+<section class="movie-hero">
+    <div class="movie-backdrop">
+        {% if movie.poster_url %}
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+        {% endif %}
+        <div class="movie-overlay"></div>
+    </div>
+    
+    <div class="movie-info-container">
+        <div class="movie-main-info">
+            <h1 class="movie-title">{{ movie.title }}</h1>
+            
+            <div class="movie-meta">
+                <span class="year">{{ movie.year }}</span>
+                <span class="rating"><i class="fas fa-star"></i> {{ movie.rating }}/10</span>
+                <span class="duration">{{ movie.duration }} min</span>
+                <span class="genre-badge">{{ movie.get_genre_display }}</span>
+            </div>
+            
+            <p class="movie-description">{{ movie.description }}</p>
+            
+            <div class="movie-actions">
+                <a href="{% url 'watch_video' movie.id %}" class="btn-play-movie" id="playBtn">
+                    <i class="fas fa-play"></i> Play
+                </a>
+                {% if user.is_authenticated %}
+                    <button class="btn-add-list" id="watchlistBtn" data-movie-id="{{ movie.id }}">
+                        {% if in_watchlist %}
+                            <i class="fas fa-check"></i> My List
+                        {% else %}
+                            <i class="fas fa-plus"></i> My List
+                        {% endif %}
+                    </button>
+                {% endif %}
+                
+                <button class="btn-trailer" onclick="showTrailer()">
+                    <i class="fas fa-info-circle"></i> Details
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Movie Details Section -->
+<section class="movie-details">
+    <div class="details-grid">
+        <div class="details-main">
+            <div class="info-section">
+                <h2>Movie Details</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Director</span>
+                        <span class="value">Unknown</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Cast</span>
+                        <span class="value">Unknown</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Genre</span>
+                        <span class="value">{{ movie.get_genre_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Release Year</span>
+                        <span class="value">{{ movie.year }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Duration</span>
+                        <span class="value">{{ movie.duration }} min</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Rating</span>
+                        <span class="value">{{ movie.rating }}/10</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Similar Movies -->
+            {% if similar_movies %}
+            <div class="similar-movies">
+                <h2>More Like This</h2>
+                <div class="similar-grid">
+                    {% for similar in similar_movies %}
+                    <div class="similar-card">
+                        <a href="{% url 'movie_detail' similar.id %}">
+                            {% if similar.poster_url %}
+                                <img src="{{ similar.poster_url }}" alt="{{ similar.title }}">
+                            {% else %}
+                                <div class="no-thumbnail">
+                                    <i class="fas fa-film"></i>
+                                </div>
+                            {% endif %}
+                            <div class="similar-info">
+                                <h3>{{ similar.title }}</h3>
+                                <div class="similar-meta">
+                                    <span>{{ similar.year }}</span>
+                                    <span><i class="fas fa-star"></i> {{ similar.rating }}</span>
+                                    <span>{{ similar.get_genre_display }}</span>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="details-sidebar">
+            <!-- Cast & Crew (placeholder) -->
+            <div class="sidebar-section">
+                <h3>Cast</h3>
+                <p class="placeholder-text">Cast information not available</p>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Tags</h3>
+                <div class="tags">
+                    <span class="tag">{{ movie.get_genre_display }}</span>
+                    <span class="tag">Movie</span>
+                    <span class="tag">{{ movie.year }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Loading/Error Messages -->
+<div class="toast" id="toast">
+    <span class="toast-message"></span>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/movie.js' %}"></script>
+{% endblock %}

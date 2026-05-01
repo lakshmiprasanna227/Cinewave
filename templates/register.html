@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Account - CineWave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Register Page -->
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="{% url 'home' %}" class="auth-logo">
+                    <i class="fas fa-play"></i>
+                    <span>CineWave</span>
+                </a>
+                <h1>Create Account</h1>
+            </div>
+            
+            <form method="post" class="auth-form" action="{% url 'register' %}">
+                {% csrf_token %}
+                
+                {% if form.errors %}
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {% if form.errors.items %}
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                {{ error }}
+                            {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        Please fix the errors below.
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                        <i class="fas fa-info-circle"></i>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="form-group">
+                    <input type="text" name="username" id="id_username" 
+                           class="form-input" placeholder=" " required>
+                    <label for="id_username" class="form-label">Username</label>
+                </div>
+                
+                <div class="form-group">
+                    <input type="email" name="email" id="id_email" 
+                           class="form-input" placeholder=" " required>
+                    <label for="id_email" class="form-label">Email</label>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" name="password1" id="id_password1" 
+                           class="form-input" placeholder=" " required>
+                    <label for="id_password1" class="form-label">Password</label>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" name="password2" id="id_password2" 
+                           class="form-input" placeholder=" " required>
+                    <label for="id_password2" class="form-label">Confirm Password</label>
+                </div>
+                
+                <button type="submit" class="auth-btn">
+                    Create Account
+                </button>
+                
+                <p class="terms">
+                    By clicking "Create Account", you agree to our 
+                    <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+                </p>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Background -->
+    <div class="auth-background">
+        <div class="bg-overlay"></div>
+    </div>
+</div>
+{% endblock %}

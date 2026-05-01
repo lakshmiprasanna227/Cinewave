@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My List - CineWave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/watchlist.css' %}">
+{% endblock %}
+
+{% block content %}
+<!-- Watchlist Page -->
+<div class="watchlist-page">
+    <div class="watchlist-header">
+        <h1>My List</h1>
+        <p>Your personalized movie collection</p>
+    </div>
+    
+    <div class="watchlist-content" id="watchlistContent">
+        <!-- Dynamic Content - Loaded via JavaScript -->
+        <div class="loading-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading your list...</p>
+        </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <div class="empty-icon">
+            <i class="fas fa-film"></i>
+        </div>
+        <h2>Your list is empty</h2>
+        <p>Save movies by clicking the "My List" button on any movie page.</p>
+        <a href="{% url 'home' %}" class="btn-browse">
+            <i class="fas fa-play"></i> Browse Movies
+        </a>
+    </div>
+</div>
+
+<!-- Remove Confirmation Modal -->
+<div class="modal" id="removeModal">
+    <div class="modal-content">
+        <h3>Remove from My List?</h3>
+        <p>Are you sure you want to remove this movie from your list?</p>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeRemoveModal()">Cancel</button>
+            <button class="btn-remove" id="confirmRemoveBtn">Remove</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/watchlist.js' %}"></script>
+{% endblock %}

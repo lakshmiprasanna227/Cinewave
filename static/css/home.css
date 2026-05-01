@@ -1,0 +1,450 @@
+/* CineWave - Homepage Stylesheet
+ * Netflix-style movie browsing interface
+ * =================================== */
+
+/* ===== Hero Banner ===== */
+.hero-banner {
+    position: relative;
+    height: 85vh;
+    min-height: 500px;
+    overflow: hidden;
+}
+
+.hero-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.hero-bg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    background: var(--darker);
+}
+
+/* Fallback gradient for hero when no image */
+.hero-gradient {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        135deg,
+        #1a1a2e 0%,
+        #16213e 25%,
+        #0f3460 50%,
+        #1a1a2e 75%,
+        #0b0b0b 100%
+    );
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(20, 20, 20, 0.3) 0%,
+        rgba(20, 20, 20, 0.6) 50%,
+        var(--dark) 100%
+    );
+    background: -webkit-linear-gradient(
+        to bottom,
+        rgba(20, 20, 20, 0.3) 0%,
+        rgba(20, 20, 20, 0.6) 50%,
+        var(--dark) 100%
+    );
+}
+
+.hero-content {
+    position: absolute;
+    bottom: 25%;
+    left: 0;
+    padding: var(--spacing-xl);
+    max-width: 600px;
+    z-index: 1;
+}
+
+.hero-title {
+    font-size: var(--font-size-hero);
+    font-weight: 900;
+    margin-bottom: var(--spacing-md);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    line-height: 1.1;
+}
+
+.hero-description {
+    font-size: var(--font-size-lg);
+    color: var(--light);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.6;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.hero-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--gray-light);
+}
+
+.hero-meta .rating {
+    color: var(--secondary);
+    font-weight: 600;
+}
+
+.hero-meta .rating i {
+    color: #ffa00a;
+}
+
+.hero-meta .genre-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.hero-buttons .btn {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+/* ===== Movies Container ===== */
+.movies-container {
+    position: relative;
+    margin-top: -100px;
+    z-index: 1;
+    padding-bottom: var(--spacing-2xl);
+}
+
+/* ===== Movie Row ===== */
+.movie-row {
+    margin-bottom: var(--spacing-2xl);
+    padding: 0 var(--spacing-xl);
+}
+
+.row-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--light);
+}
+
+.row-title i {
+    color: var(--primary);
+}
+
+.row-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.empty-row-message {
+    padding: var(--spacing-lg) 0;
+    color: var(--gray-light);
+    font-size: var(--font-size-base);
+}
+
+.movie-cards {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: var(--spacing-md) var(--spacing-sm);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.movie-cards::-webkit-scrollbar {
+    display: none;
+}
+
+/* ===== Movie Card ===== */
+.movie-card {
+    flex: 0 0 auto;
+    width: 200px;
+    position: relative;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    transition: transform var(--transition), box-shadow var(--transition);
+    cursor: pointer;
+}
+
+.movie-card:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+    z-index: 10;
+}
+
+.movie-card img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    transition: filter var(--transition);
+}
+
+.movie-card:hover img {
+    filter: brightness(0.7);
+}
+
+.no-thumbnail {
+    width: 100%;
+    height: 300px;
+    background: var(--darker);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--gray);
+}
+
+/* Card Overlay */
+.card-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--spacing-md);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all var(--transition);
+}
+
+.movie-card:hover .card-overlay {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card-info h3 {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    color: var(--light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-meta {
+    display: flex;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    color: var(--gray-light);
+}
+
+.card-meta i {
+    color: #ffa00a;
+}
+
+/* ===== Scroll Buttons ===== */
+.scroll-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    color: var(--light);
+    font-size: var(--font-size-2xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition);
+    z-index: 5;
+}
+
+.row-content:hover .scroll-btn {
+    opacity: 1;
+}
+
+.scroll-left {
+    left: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+}
+
+.scroll-right {
+    right: 0;
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+}
+
+.scroll-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* ===== Search Modal ===== */
+.search-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--dark);
+    z-index: var(--z-modal);
+    display: none;
+    overflow-y: auto;
+}
+
+.search-modal.active {
+    display: block;
+}
+
+.search-modal-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-2xl);
+}
+
+.close-search {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    font-size: 2rem;
+    color: var(--light);
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius-full);
+    transition: background var(--transition-fast);
+}
+
+.close-search:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.search-modal-content h2 {
+    margin-bottom: var(--spacing-xl);
+    padding-top: var(--spacing-2xl);
+}
+
+#searchResultsContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+/* ===== Loading Placeholder ===== */
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl);
+    color: var(--gray);
+    font-size: var(--font-size-lg);
+    flex: 1;
+}
+
+.loading-placeholder i {
+    font-size: var(--font-size-2xl);
+}
+
+/* ===== Recommendations Row (Dynamic) ===== */
+#recommendations-content,
+#my-list-content {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: var(--spacing-md) var(--spacing-sm);
+}
+
+#recommendations-content .movie-card,
+#my-list-content .movie-card {
+    flex: 0 0 auto;
+    width: 200px;
+}
+
+/* ===== Responsive Design ===== */
+@media (max-width: 768px) {
+    .hero-banner {
+        height: 60vh;
+        min-height: 400px;
+    }
+    
+    .hero-content {
+        bottom: 15%;
+        padding: var(--spacing-md);
+        max-width: 100%;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-description {
+        font-size: var(--font-size-base);
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .hero-buttons .btn {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        font-size: var(--font-size-base);
+    }
+    
+    .movie-row {
+        padding: 0 var(--spacing-md);
+    }
+    
+    .movie-card {
+        width: 150px;
+    }
+    
+    .movie-card img,
+    .movie-card .no-thumbnail {
+        height: 225px;
+    }
+    
+    .scroll-btn {
+        display: none;
+    }
+    
+    .movies-container {
+        margin-top: -50px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 1.75rem;
+    }
+    
+    .hero-meta {
+        flex-wrap: wrap;
+    }
+    
+    .movie-card {
+        width: 130px;
+    }
+    
+    .movie-card img,
+    .movie-card .no-thumbnail {
+        height: 195px;
+    }
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CineWave - Stream movies online">
+    <title>{% block title %}CineWave - Stream Movies Online{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{% url 'home' %}" class="logo">
+                <i class="fas fa-play"></i>
+                <span>CineWave</span>
+            </a>
+            
+            <div class="nav-links">
+                <a href="{% url 'home' %}" class="nav-link active">Home</a>
+                <a href="{% url 'home' %}#movies" class="nav-link">Movies</a>
+                <a href="{% url 'home' %}#tv-shows" class="nav-link">TV Shows</a>
+                <a href="{% url 'home' %}#new-popular" class="nav-link">New & Popular</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'watchlist' %}" class="nav-link">My List</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="nav-link">My List</a>
+                {% endif %}
+            </div>
+            
+            <div class="nav-actions">
+                <!-- Search -->
+                <div class="search-container">
+                    <button class="search-btn" onclick="toggleSearch()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <div class="search-dropdown" id="searchDropdown">
+                        <input type="text" id="searchInput" placeholder="Titles, people, genres..." 
+                               onkeyup="handleSearch(event)">
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+                </div>
+                
+                <!-- Notifications -->
+                <button class="notification-btn">
+                    <i class="fas fa-bell"></i>
+                </button>
+                
+                <!-- User Menu -->
+                {% if user.is_authenticated %}
+                    <div class="user-menu">
+                        <button class="user-btn">
+                            <img src="https://via.placeholder.com/32" alt="User" class="user-avatar">
+                            <span>{{ user.username }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown">
+                            <a href="#"><i class="fas fa-user"></i> Account</a>
+                            <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                            <hr>
+                            <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="login-btn">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h2>CineWave</h2>
+                <p>Stream movies and TV shows online</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h3>Browse</h3>
+                    <a href="#">Movies</a>
+                    <a href="{% url 'home' %}#tv-shows">TV Shows</a>
+                    <a href="{% url 'home' %}#new-popular">New & Popular</a>
+                </div>
+                <div class="footer-column">
+                    <h3>Account</h3>
+                    <a href="#">My Profile</a>
+                    <a href="#">Settings</a>
+                    <a href="#">Help Center</a>
+                </div>
+                <div class="footer-column">
+                    <h3>Legal</h3>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Cookie Preferences</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 CineWave. All rights reserved.</p>
+        </div>
+    </footer>
+    
+<!-- JavaScript - Vanilla JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    <!-- React App (optional - loads on demand) -->
+    <div id="react-root"></div>
+    <script src="{% static 'js/react-app.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
