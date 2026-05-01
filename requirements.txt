@@ -1,24 +1,6 @@
-# Django Framework
 Django>=4.2,<5.0
-
-# Database
-sqlite3 (included with Python)
-
-# HTTP Requests
 requests>=2.31.0
-
-# Image Processing (for seed_movies command)
 Pillow>=10.0.0
-
-# WhiteNoise for serving static files in production
 whitenoise>=6.5.0
-
-# REST Framework
 djangorestframework>=3.14.0
-
-# Python Decimals for rating fields
-python-decimal>=1.14.0
-
-# Optional: For production server
-# gunicorn>=21.0.0
-# psycopg2-binary>=2.9.0  (for PostgreSQL)
+gunicorn>=21.0.0
