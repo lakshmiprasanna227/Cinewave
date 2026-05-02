@@ -122,3 +122,151 @@ class MovieForm(forms.ModelForm):
                 'class': 'form-check-input'
             }),
         }
+
+
+class UserProfileForm(forms.ModelForm):
+    """
+    Form for updating user profile information.
+    """
+    
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Email address'
+        })
+    )
+    
+    class Meta:
+        model = User
+        fields = ('username', 'email')
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Username'
+        })
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email:
+            # Check if email is already in use by another user
+            existing = User.objects.filter(email=email).exclude(
+                id=self.instance.id
+            )
+            if existing.exists():
+                raise forms.ValidationError(
+                    'This email is already in use by another account.'
+                )
+        return email
+
+
+class PasswordChangeForm(forms.Form):
+    """
+    Form for changing user password.
+    """
+    
+    current_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Current Password'
+        }),
+        required=True
+    )
+    new_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'New Password'
+        }),
+        required=True
+    )
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirm New Password'
+        }),
+        required=True
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+    
+    def clean_current_password(self):
+        current_password = self.cleaned_data.get('current_password')
+        if not self.user.check_password(current_password):
+            raise forms.ValidationError('Current password is incorrect.')
+        return current_password
+    
+    def clean(self):
+        cleaned_data = self.cleaned_data
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
+        
+        if new_password and confirm_password:
+            if new_password != confirm_password:
+                raise forms.ValidationError(
+                    'New passwords do not match.'
+                )
+            if len(new_password) < 8:
+                raise forms.ValidationError(
+                    'Password must be at least 8 characters.'
+                )
+        return cleaned_data
+
+
+class UserSettingsForm(forms.Form):
+    """
+    Form for user application settings/preferences.
+    """
+    
+    THEME_CHOICES = [
+        ('dark', 'Dark'),
+        ('light', 'Light'),
+        ('auto', 'Auto (System)'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('es', 'Spanish'),
+        ('fr', 'French'),
+        ('de', 'German'),
+    ]
+    
+    theme = forms.ChoiceField(
+        choices=THEME_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    language = forms.ChoiceField(
+        choices=LANGUAGE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    autoplay_next = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        })
+    )
+    
+    volume_level = forms.IntegerField(
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': 0,
+            'max': 100
+        })
+    )
+    
+    default_quality = forms.ChoiceField(
+        choices=[
+            ('auto', 'Auto'),
+            ('1080p', '1080p'),
+            ('720p', '720p'),
+            ('480p', '480p'),
+        ],
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )

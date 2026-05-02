@@ -30,19 +30,28 @@
             </a>
             
             <div class="nav-links">
-                <a href="{% url 'home' %}" class="nav-link active">Home</a>
-                <a href="{% url 'home' %}#movies" class="nav-link">Movies</a>
-                <a href="{% url 'home' %}#tv-shows" class="nav-link">TV Shows</a>
-                <a href="{% url 'home' %}#new-popular" class="nav-link">New & Popular</a>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'watchlist' %}" class="nav-link">My List</a>
+                {% if request.resolver_match.url_name == 'home' %}
+                    <a href="{% url 'home' %}" class="nav-link active">Home</a>
+                    <a href="{% url 'home' %}#movies" class="nav-link">Movies</a>
+                    <a href="{% url 'home' %}#tv-shows" class="nav-link">TV Shows</a>
+                    <a href="{% url 'home' %}#new-popular" class="nav-link">New & Popular</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'watchlist' %}" class="nav-link">My List</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="nav-link">My List</a>
+                    {% endif %}
                 {% else %}
-                    <a href="{% url 'login' %}" class="nav-link">My List</a>
+                    <a href="{% url 'home' %}" class="nav-link">Home</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                        <a href="{% url 'watchlist' %}" class="nav-link">My List</a>
+                    {% endif %}
                 {% endif %}
             </div>
             
             <div class="nav-actions">
-                <!-- Search -->
+                {% if request.resolver_match.url_name == 'home' %}
+                <!-- Search (only on home page) -->
                 <div class="search-container">
                     <button class="search-btn" onclick="toggleSearch()">
                         <i class="fas fa-search"></i>
@@ -53,6 +62,7 @@
                         <div class="search-results" id="searchResults"></div>
                     </div>
                 </div>
+                {% endif %}
                 
                 <!-- Notifications -->
                 <button class="notification-btn">
@@ -68,8 +78,8 @@
                             <i class="fas fa-chevron-down"></i>
                         </button>
                         <div class="user-dropdown">
-                            <a href="#"><i class="fas fa-user"></i> Account</a>
-                            <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                            <a href="{% url 'profile' %}"><i class="fas fa-user"></i> Account</a>
+                            <a href="{% url 'settings' %}"><i class="fas fa-cog"></i> Settings</a>
                             <hr>
                             <a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
                         </div>
@@ -94,16 +104,18 @@
                 <p>Stream movies and TV shows online</p>
             </div>
             <div class="footer-links">
+                {% if request.resolver_match.url_name == 'home' %}
                 <div class="footer-column">
                     <h3>Browse</h3>
                     <a href="#">Movies</a>
                     <a href="{% url 'home' %}#tv-shows">TV Shows</a>
                     <a href="{% url 'home' %}#new-popular">New & Popular</a>
                 </div>
+                {% endif %}
                 <div class="footer-column">
                     <h3>Account</h3>
-                    <a href="#">My Profile</a>
-                    <a href="#">Settings</a>
+                    <a href="{% url 'profile' %}">My Profile</a>
+                    <a href="{% url 'settings' %}">Settings</a>
                     <a href="#">Help Center</a>
                 </div>
                 <div class="footer-column">

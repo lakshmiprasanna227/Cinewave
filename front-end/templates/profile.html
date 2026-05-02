@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - CineWave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="profile-header">
+        <h1>My Profile</h1>
+    </div>
+    
+    <div class="profile-content">
+        <form method="POST" class="profile-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_username">Username</label>
+                <input type="text" id="id_username" name="username" value="{{ user.username }}" readonly>
+                <small>Username cannot be changed.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_email">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                <div class="error-message">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">Go to Dashboard</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

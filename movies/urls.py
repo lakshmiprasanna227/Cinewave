@@ -53,6 +53,13 @@ urlpatterns = [
     # Progress API
     path('api/save-progress/', views.api_save_progress, name='api_save_progress'),
     
-    # Recommendations API
+# Recommendations API
     path('api/recommendations/', views.api_recommendations, name='api_recommendations'),
+    
+    # User Account URLs
+    path('profile/', views.profile_view, name='profile'),
+    path('settings/', views.settings_view, name='settings'),
+    path('password-change/', views.password_change_view, name='password_change'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('delete-account/', views.delete_account_view, name='delete_account'),
 ]

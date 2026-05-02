@@ -15,13 +15,14 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 import json
 import requests
 from io import BytesIO
 from urllib.parse import parse_qs, urlencode, urlparse
 
 from .models import Movie, WatchList, WatchHistory
+from .forms import UserProfileForm, PasswordChangeForm, UserSettingsForm
 
 
 # =====================================================
@@ -480,18 +481,23 @@ def api_watchlist(request):
     API endpoint to get user's watchlist.
     
     Returns:
-    - JSON list of watchlist items
+    - JSON list of watchlist items with full media URLs
     """
     watchlist = WatchList.objects.filter(user=request.user).select_related('movie')
     
     watchlist_data = []
     for item in watchlist:
         movie = item.movie
+        # Get thumbnail URL with full domain
+        thumbnail_url = movie.poster_url or f"https://picsum.photos/seed/{movie.id}/300/450"
+        if thumbnail_url.startswith('/'):
+            thumbnail_url = request.build_absolute_uri(thumbnail_url)
+        
         watchlist_data.append({
             'id': item.id,
             'movie_id': movie.id,
             'title': movie.title,
-            'thumbnail': movie.poster_url,
+            'thumbnail': thumbnail_url,
             'rating': float(movie.rating),
             'year': movie.year,
             'added_at': item.added_at.isoformat(),
@@ -548,46 +554,245 @@ def api_recommendations(request):
     API endpoint to get movie recommendations.
     
     Uses genre-based and rating-based recommendations.
+    For authenticated users: recommends based on watch history genres
+    For anonymous users: returns top rated movies
     
     Returns:
-    - JSON list of recommended movies
+    - JSON list of recommended movies with full media URLs
     """
-    # Get user's watch history to determine preferences
+    # Helper function to get thumbnail URL with full domain
+    def get_thumbnail_url(movie):
+        thumbnail_url = movie.poster_url or f"https://picsum.photos/seed/{movie.id}/300/450"
+        if thumbnail_url.startswith('/'):
+            thumbnail_url = request.build_absolute_uri(thumbnail_url)
+        return thumbnail_url
+    
+    # Collect all watched/watchlisted movie IDs for exclusion
+    excluded_movie_ids = set()
+    watched_genres = set()
+    
     if request.user.is_authenticated:
+        # Get user's watch history to determine preferences
         watch_history = WatchHistory.objects.filter(user=request.user).select_related('movie')
         
         if watch_history.exists():
             # Get genres from watched movies
-            watched_genres = set(item.movie.genre for item in watch_history)
+            for item in watch_history:
+                watched_genres.add(item.movie.genre)
+                excluded_movie_ids.add(item.movie.id)
+            
+            # Also get watchlist movie IDs to exclude
+            watchlist_movies = WatchList.objects.filter(user=request.user).values_list('movie_id', flat=True)
+            excluded_movie_ids.update(watchlist_movies)
             
             # Get recommendations based on genres
-            recommendations = Movie.objects.filter(genre__in=watched_genres).exclude(
-                watch_history__user=request.user
-            )[:10]
-            
-            if recommendations.exists():
-                movie_data = []
-                for movie in recommendations:
-                    movie_data.append({
-                        'id': movie.id,
-                        'title': movie.title,
-                        'thumbnail': movie.poster_url,
-                        'rating': float(movie.rating),
-                        'genre': movie.get_genre_display(),
-                    })
-                return JsonResponse({'recommendations': movie_data})
+            if watched_genres:
+                recommendations_qs = Movie.objects.filter(genre__in=watched_genres)
+                
+                # Exclude already watched/watchlisted movies
+                if excluded_movie_ids:
+                    recommendations_qs = recommendations_qs.exclude(id__in=excluded_movie_ids)
+                
+                recommendations = list(recommendations_qs.order_by('-rating')[:10])
+                
+                # If we got genre-based recommendations, return them
+                if recommendations:
+                    movie_data = []
+                    for movie in recommendations:
+                        movie_data.append({
+                            'id': movie.id,
+                            'title': movie.title,
+                            'thumbnail': get_thumbnail_url(movie),
+                            'rating': float(movie.rating),
+                            'genre': movie.get_genre_display(),
+                        })
+                    return JsonResponse({'recommendations': movie_data})
     
-    # Default recommendations: top rated movies
-    recommendations = Movie.objects.order_by('-rating')[:10]
+    # Default recommendations: top rated movies (fallback for all users)
+    # Exclude any movies the user has already watched or in watchlist
+    recommendations_qs = Movie.objects.all()
+    
+    if excluded_movie_ids:
+        recommendations_qs = recommendations_qs.exclude(id__in=excluded_movie_ids)
+    
+    recommendations = list(recommendations_qs.order_by('-rating')[:10])
     
     movie_data = []
     for movie in recommendations:
         movie_data.append({
             'id': movie.id,
             'title': movie.title,
-            'thumbnail': movie.poster_url,
+            'thumbnail': get_thumbnail_url(movie),
             'rating': float(movie.rating),
             'genre': movie.get_genre_display(),
         })
     
     return JsonResponse({'recommendations': movie_data})
+
+
+# =====================================================
+# USER ACCOUNT VIEWS (Profile, Settings, Dashboard)
+# =====================================================
+
+@login_required
+def profile_view(request):
+    """
+    User profile page view.
+    
+    Displays and updates user profile information.
+    """
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserProfileForm(instance=request.user)
+    
+    context = {
+        'form': form,
+        'user': request.user,
+    }
+    return render(request, 'profile.html', context)
+
+
+@login_required
+def settings_view(request):
+    """
+    User settings page view.
+    
+    Displays and updates user application preferences.
+    """
+    # Get current settings from session or cookies
+    current_settings = {
+        'theme': request.session.get('theme', 'dark'),
+        'language': request.session.get('language', 'en'),
+        'autoplay_next': request.session.get('autoplay_next', True),
+        'volume_level': request.session.get('volume_level', 50),
+        'default_quality': request.session.get('default_quality', 'auto'),
+    }
+    
+    if request.method == 'POST':
+        form = UserSettingsForm(request.POST)
+        if form.is_valid():
+            # Save settings to session
+            request.session['theme'] = form.cleaned_data['theme']
+            request.session['language'] = form.cleaned_data['language']
+            request.session['autoplay_next'] = form.cleaned_data['autoplay_next']
+            request.session['volume_level'] = form.cleaned_data['volume_level']
+            request.session['default_quality'] = form.cleaned_data['default_quality']
+            
+            messages.success(request, 'Settings saved successfully!')
+            return redirect('settings')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserSettingsForm(initial=current_settings)
+    
+    context = {
+        'form': form,
+        'current_settings': current_settings,
+    }
+    return render(request, 'settings.html', context)
+
+
+@login_required
+def password_change_view(request):
+    """
+    Password change page view.
+    
+    Allows users to change their password.
+    """
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            request.user.set_password(form.cleaned_data['new_password'])
+            request.user.save()
+            messages.success(request, 'Password changed successfully! Please sign in again.')
+            logout(request)
+            return redirect('login')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    context = {
+        'form': form,
+    }
+    return render(request, 'password_change.html', context)
+
+
+@login_required
+def dashboard_view(request):
+    """
+    User dashboard page view.
+    
+    Displays user statistics and activity.
+    """
+    # Get user statistics
+    watchlist_count = WatchList.objects.filter(user=request.user).count()
+    watch_history_count = WatchHistory.objects.filter(user=request.user).count()
+    completed_count = WatchHistory.objects.filter(
+        user=request.user, 
+        completed=True
+    ).count()
+    
+    # Get recent activity
+    recent_watch_history = WatchHistory.objects.filter(
+        user=request.user
+    ).select_related('movie').order_by('-watched_at')[:5]
+    
+    # Get watchlist items
+    watchlist_items = WatchList.objects.filter(
+        user=request.user
+    ).select_related('movie').order_by('-added_at')[:5]
+    
+    # Get genre preferences from watch history
+    genre_stats = WatchHistory.objects.filter(
+        user=request.user
+    ).values('movie__genre').annotate(
+        count=Count('id')
+    ).order_by('-count')[:5]
+    
+    # Calculate total watch time
+    total_watch_time = sum(
+        h.progress for h in WatchHistory.objects.filter(user=request.user)
+    )
+    total_hours = total_watch_time // 3600
+    total_minutes = (total_watch_time % 3600) // 60
+    
+    context = {
+        'watchlist_count': watchlist_count,
+        'watch_history_count': watch_history_count,
+        'completed_count': completed_count,
+        'recent_watch_history': recent_watch_history,
+        'watchlist_items': watchlist_items,
+        'genre_stats': genre_stats,
+        'total_watch_time': f'{total_hours}h {total_minutes}m',
+    }
+    return render(request, 'dashboard.html', context)
+
+
+@login_required
+def delete_account_view(request):
+    """
+    Delete account view.
+    
+    Allows users to delete their account.
+    """
+    if request.method == 'POST':
+        # Check for confirmation
+        confirmation = request.POST.get('confirmation', '')
+        if confirmation == 'DELETE':
+            user = request.user
+            logout(request)
+            user.delete()
+            messages.success(request, 'Your account has been deleted.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Please type DELETE to confirm.')
+    
+    return render(request, 'delete_account.html')

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - CineWave{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>My Dashboard</h1>
+        <p>Welcome back, {{ user.username }}!</p>
+    </div>
+    
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ watchlist_count }}</h3>
+                <p>Movies in Watchlist</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ watch_history_count }}</h3>
+                <p>Movies Watched</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ completed_count }}</h3>
+                <p>Completed</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+                <h3>{{ total_watch_time }}</h3>
+                <p>Total Watch Time</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-sections">
+        <div class="dashboard-section">
+            <h2>Recently Watched</h2>
+            {% if recent_watch_history %}
+            <div class="movie-list">
+                {% for item in recent_watch_history %}
+                <div class="movie-item">
+                    <a href="{% url 'movie_detail' item.movie.id %}">
+                        {% if item.movie.poster_url %}
+                            <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="movie-info">
+                            <h3>{{ item.movie.title }}</h3>
+                            <p>{{ item.movie.get_genre_display }} - {{ item.watched_at|date:"M d, Y" }}</p>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-message">You haven't watched any movies yet.</p>
+            {% endif %}
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>My Watchlist</h2>
+            {% if watchlist_items %}
+            <div class="movie-list">
+                {% for item in watchlist_items %}
+                <div class="movie-item">
+                    <a href="{% url 'movie_detail' item.movie.id %}">
+                        {% if item.movie.poster_url %}
+                            <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}">
+                        {% else %}
+                            <div class="no-thumbnail">
+                                <i class="fas fa-film"></i>
+                            </div>
+                        {% endif %}
+                        <div class="movie-info">
+                            <h3>{{ item.movie.title }}</h3>
+                            <p>{{ item.movie.get_genre_display }} - {{ item.added_at|date:"M d, Y" }}</p>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-message">Your watchlist is empty.</p>
+            {% endif %}
+        </div>
+        
+        <div class="dashboard-section">
+            <h2>Favorite Genres</h2>
+            {% if genre_stats %}
+            <div class="genre-list">
+                {% for stat in genre_stats %}
+                <div class="genre-item">
+                    <span class="genre-name">{{ stat.movie__genre }}</span>
+                    <span class="genre-count">{{ stat.count }} movies</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-message">No genre preferences yet. Start watching!</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="dashboard-actions">
+        <a href="{% url 'profile' %}" class="btn btn-primary">
+            <i class="fas fa-user"></i> My Profile
+        </a>
+        <a href="{% url 'settings' %}" class="btn btn-secondary">
+            <i class="fas fa-cog"></i> Settings
+        </a>
+        <a href="{% url 'password_change' %}" class="btn btn-secondary">
+            <i class="fas fa-lock"></i> Change Password
+        </a>
+        <a href="{% url 'delete_account' %}" class="btn btn-danger">
+            <i class="fas fa-trash"></i> Delete Account
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+/* Profile Page Styles */
+
+.profile-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.profile-header {
+    margin-bottom: 30px;
+}
+
+.profile-header h1 {
+    color: #fff;
+    font-size: 2rem;
+}
+
+.profile-content {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 30px;
+}
+
+.profile-form .form-group {
+    margin-bottom: 20px;
+}
+
+.profile-form label {
+    display: block;
+    color: #e5e5e5;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.profile-form input[type="text"],
+.profile-form input[type="email"] {
+    width: 100%;
+    padding: 12px;
+    background: #2b2b2b;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.profile-form input:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.profile-form small {
+    display: block;
+    color: #808080;
+    margin-top: 5px;
+    font-size: 0.875rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background: #e50914;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #b20710;
+}
+
+.btn-secondary {
+    background: #4a4a4a;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background: #5a5a5a;
+}
