@@ -11,11 +11,15 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden, StreamingHttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+import re
+import os
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
 from django.db.models import Q, Count
+from django.utils.html import escape
 import json
 import requests
 from io import BytesIO
@@ -54,6 +58,7 @@ def get_youtube_embed_url(url, origin=None, widget_referrer=None):
     params = {
         'rel': '0',
         'modestbranding': '1',
+        'enablejsapi': '1',
     }
     if origin:
         params['origin'] = origin
@@ -61,6 +66,54 @@ def get_youtube_embed_url(url, origin=None, widget_referrer=None):
         params['widget_referrer'] = widget_referrer
 
     return f'https://www.youtube.com/embed/{video_id}?{urlencode(params)}'
+
+
+def is_direct_video_url(url):
+    """Return True when the URL points to a browser-playable video file."""
+    if not url:
+        return False
+    parsed = urlparse(url)
+    return parsed.path.lower().endswith(('.mp4', '.webm', '.ogg', '.mov', '.m4v'))
+
+
+def fallback_poster(request, movie_id):
+    """Serve a local SVG poster so broken external posters never leave blank cards."""
+    movie = get_object_or_404(Movie, id=movie_id)
+    title = escape(movie.title)
+    genre = escape(movie.get_genre_display())
+    initials = ''.join(part[0] for part in movie.title.split()[:3]).upper() or 'CW'
+    initials = escape(initials[:3])
+    palettes = {
+        'action': ('#b91c1c', '#111827'),
+        'comedy': ('#ca8a04', '#1f2937'),
+        'drama': ('#7c3aed', '#111827'),
+        'horror': ('#374151', '#020617'),
+        'sci-fi': ('#0e7490', '#111827'),
+        'romance': ('#be185d', '#111827'),
+        'thriller': ('#4f46e5', '#111827'),
+        'animation': ('#16a34a', '#111827'),
+        'documentary': ('#475569', '#111827'),
+    }
+    accent, bg = palettes.get(movie.genre, ('#e50914', '#141414'))
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750" viewBox="0 0 500 750" role="img" aria-label="{title} poster">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="{accent}"/>
+      <stop offset="0.52" stop-color="{bg}"/>
+      <stop offset="1" stop-color="#050505"/>
+    </linearGradient>
+  </defs>
+  <rect width="500" height="750" fill="url(#bg)"/>
+  <rect x="32" y="32" width="436" height="686" rx="18" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="3"/>
+  <circle cx="250" cy="238" r="92" fill="rgba(255,255,255,.12)"/>
+  <text x="250" y="263" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="700" fill="#fff">{initials}</text>
+  <text x="250" y="514" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700" fill="#fff">
+    <tspan x="250">{title[:24]}</tspan>
+  </text>
+  <text x="250" y="568" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="rgba(255,255,255,.78)">{movie.year}  |  {genre}</text>
+  <text x="250" y="666" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="18" letter-spacing="5" fill="rgba(255,255,255,.55)">CINEWAVE</text>
+</svg>'''
+    return HttpResponse(svg, content_type='image/svg+xml')
 
 def home(request):
     """
@@ -160,22 +213,30 @@ def watch_video(request, movie_id):
     start_position = watch_history.progress if watch_history else 0
     origin = f'{request.scheme}://{request.get_host()}'
     
+    youtube_embed_url = get_youtube_embed_url(
+        movie.video_url,
+        origin=origin,
+        widget_referrer=request.build_absolute_uri(),
+    )
+
+    video_source_url = None
+    if not youtube_embed_url:
+        if movie.video_file:
+            video_source_url = request.build_absolute_uri(movie.video_file.url)
+
     context = {
         'movie': movie,
         'start_position': start_position,
-        'youtube_embed_url': get_youtube_embed_url(
-            movie.video_url,
-            origin=origin,
-            widget_referrer=request.build_absolute_uri(),
-        ),
+        'youtube_embed_url': youtube_embed_url,
+        'video_source_url': video_source_url,
     }
     return render(request, 'video.html', context)
 
 
 def stream_video(request, movie_id):
     """
-    Video streaming endpoint - proxies external video URLs through Django.
-    Bypasses CORS restrictions by serving through the Django server.
+    Video streaming endpoint - handles both local files and external videos.
+    Proxies external videos through Django to bypass CORS restrictions.
     """
     movie = get_object_or_404(Movie, id=movie_id)
     
@@ -183,23 +244,53 @@ def stream_video(request, movie_id):
     if movie.video_file:
         video_path = movie.video_file.path
         try:
+            file_size = os.path.getsize(video_path)
+            range_header = request.headers.get('Range')
+            start = 0
+            end = file_size - 1
+            status_code = 200
+
+            if range_header:
+                match = re.match(r'bytes=(\d*)-(\d*)', range_header)
+                if match:
+                    if match.group(1):
+                        start = int(match.group(1))
+                    if match.group(2):
+                        end = int(match.group(2))
+                    if end >= file_size:
+                        end = file_size - 1
+                    if start > end:
+                        return HttpResponse(status=416)
+                    status_code = 206
+
+            length = end - start + 1
             with open(video_path, 'rb') as video_file:
+                video_file.seek(start)
                 response = StreamingHttpResponse(
-                    video_file.read(),
-                    content_type='video/mp4'
+                    video_file.read(length),
+                    content_type='video/mp4',
+                    status=status_code
                 )
                 response['Content-Disposition'] = f'inline; filename="{movie.title}.mp4"'
                 response['Accept-Ranges'] = 'bytes'
+                response['Content-Length'] = str(length)
+                if status_code == 206:
+                    response['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+                # Add CORS headers
+                response['Access-Control-Allow-Origin'] = '*'
                 return response
         except IOError:
             return JsonResponse({'error': 'Video file not found'}, status=404)
     
     # Proxy external video URL
     elif movie.video_url:
+        if not is_direct_video_url(movie.video_url):
+            return JsonResponse({'error': 'This video URL is not a direct playable file'}, status=400)
+
         try:
-            # Use requests to fetch the external video
+            # Fetch external video with proper headers
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
             range_header = request.headers.get('Range')
             if range_header:
@@ -209,41 +300,58 @@ def stream_video(request, movie_id):
                 movie.video_url,
                 headers=headers,
                 stream=True,
-                timeout=30,
+                timeout=60,
                 allow_redirects=True,
-                verify=False  # Disable SSL verification for development
+                verify=False
             )
+            
             if response.status_code not in (200, 206):
-                response.raise_for_status()
+                return JsonResponse(
+                    {'error': f'Remote server returned status {response.status_code}'}, 
+                    status=response.status_code
+                )
             
-            # Extract content type and length
+            # Extract content type
             content_type = response.headers.get('content-type', 'video/mp4')
-            content_length = response.headers.get('content-length')
-            status = 206 if response.status_code == 206 else 200
+            content_length = response.headers.get('content-length', '')
             
-            def stream_chunks():
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        yield chunk
+            # Stream the content
+            def generate():
+                try:
+                    for chunk in response.iter_content(chunk_size=65536):
+                        if chunk:
+                            yield chunk
+                finally:
+                    response.close()
             
             streaming_response = StreamingHttpResponse(
-                stream_chunks(),
+                generate(),
                 content_type=content_type,
-                status=status,
+                status=response.status_code
             )
-            streaming_response['Content-Disposition'] = f'inline; filename="{movie.title}.mp4"'
             streaming_response['Accept-Ranges'] = 'bytes'
-            if response.headers.get('content-range'):
-                streaming_response['Content-Range'] = response.headers['content-range']
             if content_length:
                 streaming_response['Content-Length'] = content_length
-            
+            if response.headers.get('content-range'):
+                streaming_response['Content-Range'] = response.headers['content-range']
+            # Add CORS headers to allow cross-origin playback
+            streaming_response['Access-Control-Allow-Origin'] = '*'
+            streaming_response['Cross-Origin-Resource-Policy'] = 'cross-origin'
             return streaming_response
             
-        except requests.RequestException as e:
+        except requests.exceptions.RequestException as e:
+            import traceback
+            traceback.print_exc()
             return JsonResponse(
                 {'error': f'Failed to fetch video: {str(e)}'}, 
                 status=502
+            )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return JsonResponse(
+                {'error': f'Stream error: {str(e)}'}, 
+                status=500
             )
     
     return JsonResponse({'error': 'No video available'}, status=404)
@@ -486,13 +594,16 @@ def api_watchlist(request):
     watchlist = WatchList.objects.filter(user=request.user).select_related('movie')
     
     watchlist_data = []
+    debug_posters = []
+
     for item in watchlist:
         movie = item.movie
+
         # Get thumbnail URL with full domain
         thumbnail_url = movie.poster_url or f"https://picsum.photos/seed/{movie.id}/300/450"
         if thumbnail_url.startswith('/'):
             thumbnail_url = request.build_absolute_uri(thumbnail_url)
-        
+
         watchlist_data.append({
             'id': item.id,
             'movie_id': movie.id,
@@ -502,7 +613,30 @@ def api_watchlist(request):
             'year': movie.year,
             'added_at': item.added_at.isoformat(),
         })
-    
+
+        if getattr(settings, 'DEBUG', False) and len(debug_posters) < 5:
+            raw_name = ''
+            try:
+                raw_name = movie.thumbnail.name if movie.thumbnail else ''
+            except Exception:
+                raw_name = ''
+            debug_posters.append({
+                'id': movie.id,
+                'title': movie.title,
+                'thumbnail_name': raw_name,
+                'poster_url': getattr(movie, 'poster_url', None),
+                'video_url': movie.video_url,
+            })
+
+    if getattr(settings, 'DEBUG', False) and debug_posters:
+        # Temporary server-side visibility
+        print('DEBUG /api/watchlist/ debug_posters:', debug_posters)
+
+        return JsonResponse({
+            'watchlist': watchlist_data,
+            'debug_posters': debug_posters,
+        })
+
     return JsonResponse({'watchlist': watchlist_data})
 
 
@@ -560,17 +694,43 @@ def api_recommendations(request):
     Returns:
     - JSON list of recommended movies with full media URLs
     """
-    # Helper function to get thumbnail URL with full domain
+    # Helper function to get thumbnail URL with full domain (never returns empty)
     def get_thumbnail_url(movie):
-        thumbnail_url = movie.poster_url or f"https://picsum.photos/seed/{movie.id}/300/450"
+        try:
+            thumbnail_url = movie.poster_url
+        except Exception:
+            thumbnail_url = None
+
+        if not thumbnail_url or thumbnail_url == 'N/A':
+            thumbnail_url = f"https://picsum.photos/seed/{movie.id}/300/450"
+
         if thumbnail_url.startswith('/'):
             thumbnail_url = request.build_absolute_uri(thumbnail_url)
+
         return thumbnail_url
     
     # Collect all watched/watchlisted movie IDs for exclusion
     excluded_movie_ids = set()
     watched_genres = set()
+    debug_posters = []
     
+    def maybe_collect_debug(movie, returned_thumbnail):
+        # Temporary debug visibility
+        if getattr(settings, 'DEBUG', False) and len(debug_posters) < 5:
+            raw_name = ''
+            try:
+                raw_name = movie.thumbnail.name if movie.thumbnail else ''
+            except Exception:
+                raw_name = ''
+            debug_posters.append({
+                'id': movie.id,
+                'title': movie.title,
+                'thumbnail_name': raw_name,          # closest available to "raw OMDb Poster"
+                'poster_url': getattr(movie, 'poster_url', None),
+                'thumbnail_returned': returned_thumbnail,
+                'video_url': movie.video_url,
+            })
+
     if request.user.is_authenticated:
         # Get user's watch history to determine preferences
         watch_history = WatchHistory.objects.filter(user=request.user).select_related('movie')
@@ -599,13 +759,20 @@ def api_recommendations(request):
                 if recommendations:
                     movie_data = []
                     for movie in recommendations:
+                        thumb = get_thumbnail_url(movie)
                         movie_data.append({
                             'id': movie.id,
                             'title': movie.title,
-                            'thumbnail': get_thumbnail_url(movie),
+                            'thumbnail': thumb,
                             'rating': float(movie.rating),
                             'genre': movie.get_genre_display(),
                         })
+                        maybe_collect_debug(movie, thumb)
+
+                    if getattr(settings, 'DEBUG', False) and debug_posters:
+                        print('DEBUG /api/recommendations/ debug_posters:', debug_posters)
+                        return JsonResponse({'recommendations': movie_data, 'debug_posters': debug_posters})
+
                     return JsonResponse({'recommendations': movie_data})
     
     # Default recommendations: top rated movies (fallback for all users)
@@ -619,13 +786,19 @@ def api_recommendations(request):
     
     movie_data = []
     for movie in recommendations:
+        thumb = get_thumbnail_url(movie)
         movie_data.append({
             'id': movie.id,
             'title': movie.title,
-            'thumbnail': get_thumbnail_url(movie),
+            'thumbnail': thumb,
             'rating': float(movie.rating),
             'genre': movie.get_genre_display(),
         })
+        maybe_collect_debug(movie, thumb)
+    
+    if getattr(settings, 'DEBUG', False) and debug_posters:
+        print('DEBUG /api/recommendations/ debug_posters:', debug_posters)
+        return JsonResponse({'recommendations': movie_data, 'debug_posters': debug_posters})
     
     return JsonResponse({'recommendations': movie_data})
 

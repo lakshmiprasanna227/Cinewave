@@ -28,6 +28,9 @@ urlpatterns = [
     
     # Video streaming endpoint (proxy for external videos)
     path('stream/<int:movie_id>/', views.stream_video, name='stream_video'),
+
+    # Local poster fallback
+    path('poster/<int:movie_id>/fallback.svg', views.fallback_poster, name='fallback_poster'),
     
     # Authentication
     path('login/', views.login_view, name='login'),

@@ -65,7 +65,7 @@
                 <div class="movie-item">
                     <a href="{% url 'movie_detail' item.movie.id %}">
                         {% if item.movie.poster_url %}
-                            <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}">
+                            <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}" onerror="this.onerror=null;this.src='{{ item.movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -92,7 +92,7 @@
                 <div class="movie-item">
                     <a href="{% url 'movie_detail' item.movie.id %}">
                         {% if item.movie.poster_url %}
-                            <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}">
+                            <img src="{{ item.movie.poster_url }}" alt="{{ item.movie.title }}" onerror="this.onerror=null;this.src='{{ item.movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>

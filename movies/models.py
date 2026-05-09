@@ -42,6 +42,8 @@ class Movie(models.Model):
     title = models.CharField(max_length=200, help_text="Movie title")
     description = models.TextField(help_text="Movie description/synopsis")
     genre = models.CharField(max_length=20, choices=GENRE_CHOICES, default='action')
+    director = models.CharField(max_length=200, blank=True, default='', help_text="Movie director")
+    cast = models.TextField(blank=True, default='', help_text="Main cast members (comma-separated)")
     thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
     video_url = models.URLField(blank=True, null=True, help_text="Video URL or file path")
     video_file = models.FileField(upload_to='videos/', blank=True, null=True)
@@ -90,16 +92,92 @@ class Movie(models.Model):
         return None
 
     @property
-    def poster_url(self):
-        """Return a local poster URL, or a YouTube thumbnail when available."""
-        if self.thumbnail:
-            return self.thumbnail.url
+    def has_playable_video(self):
+        """Return True when the movie has a YouTube embed or uploaded video file."""
+        return bool(self.youtube_video_id or self.video_file)
 
+    @property
+    def poster_url(self):
+        """
+        Return a safe poster URL (never returns N/A or empty).
+
+        - Normalizes null/empty/"N/A"
+        - Converts http->https
+        - Normalizes local media paths to /media/...
+        - Uses a deterministic local fallback when invalid.
+        """
+        local_fallback = '/media/thumbnails/default_poster.jpg'
+
+        def normalize_url(value):
+            if value is None:
+                return None
+            if not isinstance(value, str):
+                value = str(value)
+
+            v = value.strip()
+            if not v or v.upper() == 'N/A':
+                return None
+
+            # Normalize http -> https
+            if v.startswith('http://'):
+                v = v.replace('http://', 'https://', 1)
+
+            # If it's already under /media/, keep it
+            if v.startswith('/media/'):
+                return v
+
+            # If it's a relative media path like media/thumbnails/xxx.jpg
+            if v.startswith('media/'):
+                return f'/{v}'
+
+            # ImageField sometimes yields /thumbnails/<file> or just filename stored
+            if v.startswith('thumbnails/') or v.startswith('thumbnail/'):
+                if v.startswith('thumbnail/'):
+                    v = v.replace('thumbnail/', 'thumbnails/', 1)
+                return f'/media/{v}'
+
+            # Filename-only
+            if '/' not in v and '.' in v:
+                return f'/media/thumbnails/{v}'
+
+            # Remote URL
+            if v.startswith('https://') or v.startswith('http://'):
+                return v
+
+            return None
+
+        # 1) Local uploaded poster (ImageField)
+        if self.thumbnail:
+            try:
+                candidate = normalize_url(self.thumbnail.url)
+                if candidate:
+                    return candidate
+            except Exception:
+                pass
+
+            try:
+                name = getattr(self.thumbnail, 'name', '') or ''
+                candidate = normalize_url(name)
+                if candidate:
+                    return candidate
+            except Exception:
+                pass
+
+        # 2) YouTube thumbnail when video_url is a YouTube link
         video_id = self.youtube_video_id
         if video_id:
-            return f'https://img.youtube.com/vi/{video_id}/hqdefault.jpg'
+            yt_url = f'https://img.youtube.com/vi/{video_id}/mqdefault.jpg'
+            candidate = normalize_url(yt_url)
+            if candidate:
+                return candidate
 
-        return None
+        # 3) Placeholder image fallback when no local or YouTube poster available
+        return self.fallback_poster_url
+
+    @property
+    def fallback_poster_url(self):
+        """Return a deterministic local fallback poster image."""
+        return f'/poster/{self.id}/fallback.svg'
 
 
 class WatchList(models.Model):

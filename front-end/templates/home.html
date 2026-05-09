@@ -13,7 +13,7 @@
 <section class="hero-banner" id="hero">
     <div class="hero-backdrop">
         {% if featured_thumbnail %}
-            <img src="{{ featured_thumbnail }}" alt="{{ featured.title }}" class="hero-bg">
+            <img src="{{ featured_thumbnail }}" alt="{{ featured.title }}" class="hero-bg" onerror="this.onerror=null;this.src='{{ featured.fallback_poster_url }}';">
         {% else %}
             <!-- Fallback: gradient background -->
             <div class="hero-gradient"></div>
@@ -30,9 +30,11 @@
             <span class="duration">{{ featured.duration }} min</span>
         </div>
         <div class="hero-buttons">
-            <a href="{% url 'watch_video' featured.id %}" class="btn btn-play">
-                <i class="fas fa-play"></i> Play
-            </a>
+            {% if featured.has_playable_video %}
+                <a href="{% url 'watch_video' featured.id %}" class="btn btn-play">
+                    <i class="fas fa-play"></i> Play
+                </a>
+            {% endif %}
             <a href="{% url 'movie_detail' featured.id %}" class="btn btn-info">
                 <i class="fas fa-info-circle"></i> More Info
             </a>
@@ -59,7 +61,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -100,7 +102,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -151,7 +153,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -192,7 +194,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -233,7 +235,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -274,7 +276,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>
@@ -315,7 +317,7 @@
                 <div class="movie-card" data-id="{{ movie.id }}">
                     <a href="{% url 'movie_detail' movie.id %}">
                         {% if movie.poster_url %}
-                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
                         {% else %}
                             <div class="no-thumbnail">
                                 <i class="fas fa-film"></i>

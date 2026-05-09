@@ -26,6 +26,7 @@
         <div class="video-wrapper" id="videoWrapper">
             {% if youtube_embed_url %}
             <iframe
+                id="youtubePlayer"
                 class="youtube-player"
                 src="{{ youtube_embed_url }}"
                 title="{{ movie.title }}"
@@ -36,8 +37,12 @@
             {% else %}
             <!-- Video Element -->
             <video id="videoPlayer" class="video-player" playsinline controls controlsList="nodownload">
-                <source src="{% url 'stream_video' movie.id %}" type="video/mp4">
-                <p>Your browser does not support the video tag. <a href="{% url 'stream_video' movie.id %}">Download video</a></p>
+                {% if video_source_url %}
+                    <source src="{{ video_source_url }}" type="video/mp4">
+                    <p>Your browser does not support the video tag. <a href="{{ video_source_url }}">Download video</a></p>
+                {% else %}
+                    <p>No video source available for this movie.</p>
+                {% endif %}
             </video>
             
             <!-- Custom Controls -->

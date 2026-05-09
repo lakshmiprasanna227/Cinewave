@@ -12,7 +12,7 @@
 <section class="movie-hero">
     <div class="movie-backdrop">
         {% if movie.poster_url %}
-            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}">
+            <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" onerror="this.onerror=null;this.src='{{ movie.fallback_poster_url }}';">
         {% endif %}
         <div class="movie-overlay"></div>
     </div>
@@ -31,9 +31,15 @@
             <p class="movie-description">{{ movie.description }}</p>
             
             <div class="movie-actions">
-                <a href="{% url 'watch_video' movie.id %}" class="btn-play-movie" id="playBtn">
-                    <i class="fas fa-play"></i> Play
-                </a>
+                {% if movie.has_playable_video %}
+                    <a href="{% url 'watch_video' movie.id %}" class="btn-play-movie" id="playBtn">
+                        <i class="fas fa-play"></i> Play
+                    </a>
+                {% else %}
+                    <button class="btn-play-movie" id="playBtn" disabled>
+                        <i class="fas fa-ban"></i> Video unavailable
+                    </button>
+                {% endif %}
                 {% if user.is_authenticated %}
                     <button class="btn-add-list" id="watchlistBtn" data-movie-id="{{ movie.id }}">
                         {% if in_watchlist %}
@@ -58,15 +64,15 @@
         <div class="details-main">
             <div class="info-section">
                 <h2>Movie Details</h2>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="label">Director</span>
-                        <span class="value">Unknown</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">Cast</span>
-                        <span class="value">Unknown</span>
-                    </div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="label">Director</span>
+                            <span class="value">{{ movie.director|default:"Not Available" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="label">Cast</span>
+                            <span class="value">{{ movie.cast|default:"Not Available" }}</span>
+                        </div>
                     <div class="info-item">
                         <span class="label">Genre</span>
                         <span class="value">{{ movie.get_genre_display }}</span>
@@ -95,7 +101,7 @@
                     <div class="similar-card">
                         <a href="{% url 'movie_detail' similar.id %}">
                             {% if similar.poster_url %}
-                                <img src="{{ similar.poster_url }}" alt="{{ similar.title }}">
+                                <img src="{{ similar.poster_url }}" alt="{{ similar.title }}" onerror="this.onerror=null;this.src='{{ similar.fallback_poster_url }}';">
                             {% else %}
                                 <div class="no-thumbnail">
                                     <i class="fas fa-film"></i>

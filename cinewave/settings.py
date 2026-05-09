@@ -33,6 +33,9 @@ INSTALLED_APPS = [
     'movies',
 ]
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -109,8 +112,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 TMDB_API_KEY = os.environ.get('TMDB_API_KEY', '')
 TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'
 
-# Open Movie Database integration
-OMDB_API_KEY = os.environ.get('OMDB_API_KEY', '')
+# Open Movie Database integration (Get your key from http://www.omdbapi.com/apikey.aspx)
+OMDB_API_KEY = '6276c8ed'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

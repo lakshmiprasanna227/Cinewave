@@ -1,33 +1,15 @@
 """
-Management command to seed Kannada movies with YouTube URLs.
-
-YouTube embeds for full movies/songs.
+Management command to seed Kannada movies with YouTube URLs for reliable thumbs/videos.
 """
 
 from django.core.management.base import BaseCommand
 from movies.models import Movie
-
-THUMBNAILS = [
-    'poster_elephants_dream.jpg',
-    'poster_sintel.jpg',
-    'poster_tears_of_steel.jpg',
-    'thumbnail_big_buck_bunny_cPyawff.jpg',
-    'thumbnail_big_buck_bunny.jpg',
-    'thumbnail_for_bigger_blazes_85F7VMj.jpg',
-    'poster_big_buck_bunny.jpg',
-    'thumbnail_elephants_dream.jpg',
-    'thumbnail_for_bigger_blazes_yyRnOJJ.jpg',
-    'thumbnail_for_bigger_escapes_9196CT3.jpg',
-    'thumbnail_for_bigger_escapes.jpg',
-    'poster_big_buck_bunny.jpg'
-]
 
 KANNADA_MOVIES = [
     {
         'title': 'Shhh!',
         'description': 'Kannada thriller movie.',
         'video_url': 'https://www.youtube.com/watch?v=Iq8NlxJsG8g',
-        'thumbnail': f'thumbnails/{THUMBNAILS[0]}',
         'genre': 'thriller',
         'rating': 7.5,
         'year': 2000,
@@ -38,7 +20,6 @@ KANNADA_MOVIES = [
         'title': 'Yuga Purusha',
         'description': 'Kannada drama movie.',
         'video_url': 'https://www.youtube.com/watch?v=0t5tKpK8zqM',
-        'thumbnail': f'thumbnails/{THUMBNAILS[1]}',
         'genre': 'drama',
         'rating': 8.0,
         'year': 2014,
@@ -49,7 +30,6 @@ KANNADA_MOVIES = [
         'title': 'Lifeu Ishtene',
         'description': 'Kannada romantic movie.',
         'video_url': 'https://www.youtube.com/watch?v=4XKX5p7kXjQ',
-        'thumbnail': f'thumbnails/{THUMBNAILS[2]}',
         'genre': 'romance',
         'rating': 8.2,
         'year': 2011,
@@ -60,18 +40,17 @@ KANNADA_MOVIES = [
         'title': 'Googly',
         'description': 'Popular Kannada romantic comedy.',
         'video_url': 'https://www.youtube.com/watch?v=Hc6rX9mXK5A',
-        'thumbnail': f'thumbnails/poster_big_buck_bunny.jpg',
         'genre': 'romance',
         'rating': 7.8,
         'year': 2013,
         'duration': 150,
         'is_featured': True,
     },
+    # Add other movies without 'thumbnail' - uses YouTube thumbs
     {
         'title': 'Endendigu',
         'description': 'Kannada drama.',
         'video_url': 'https://www.youtube.com/watch?v=icvr4vBDLMU',
-        'thumbnail': f'thumbnails/{THUMBNAILS[4]}',
         'genre': 'drama',
         'rating': 7.0,
         'year': 2015,
@@ -82,7 +61,6 @@ KANNADA_MOVIES = [
         'title': 'Tagaru Palya',
         'description': 'Kannada action.',
         'video_url': 'https://www.youtube.com/watch?v=PyAZtkvN5gI',
-        'thumbnail': f'thumbnails/{THUMBNAILS[5]}',
         'genre': 'action',
         'rating': 7.2,
         'year': 2016,
@@ -93,7 +71,6 @@ KANNADA_MOVIES = [
         'title': 'Thamas',
         'description': 'Kannada movie.',
         'video_url': 'https://www.youtube.com/watch?v=nazwDbR248E',
-        'thumbnail': f'thumbnails/{THUMBNAILS[7]}',
         'genre': 'drama',
         'rating': 7.4,
         'year': 2018,
@@ -101,10 +78,9 @@ KANNADA_MOVIES = [
         'is_featured': False,
     },
     {
-        'title': 'Dharmasya (Yada Yada Hi Dharmasya)',
+        'title': 'Dharmasya',
         'description': 'Kannada epic.',
         'video_url': 'https://www.youtube.com/watch?v=o3xIMTIIYHU',
-        'thumbnail': f'thumbnails/{THUMBNAILS[8]}',
         'genre': 'action',
         'rating': 7.6,
         'year': 2019,
@@ -115,7 +91,6 @@ KANNADA_MOVIES = [
         'title': 'Milana',
         'description': 'Kannada romantic drama.',
         'video_url': 'https://www.youtube.com/watch?v=WWDBGOoDKe8',
-        'thumbnail': f'thumbnails/{THUMBNAILS[9]}',
         'genre': 'romance',
         'rating': 8.1,
         'year': 2007,
@@ -126,7 +101,6 @@ KANNADA_MOVIES = [
         'title': 'Kotigobba',
         'description': 'Kannada action.',
         'video_url': 'https://www.youtube.com/watch?v=s1LqXWHpCb0',
-        'thumbnail': f'thumbnails/{THUMBNAILS[10]}',
         'genre': 'action',
         'rating': 7.0,
         'year': 2016,
@@ -137,7 +111,6 @@ KANNADA_MOVIES = [
         'title': 'Suryavamsha',
         'description': 'Kannada drama.',
         'video_url': 'https://www.youtube.com/watch?v=yiYMDyyGZLE',
-        'thumbnail': f'thumbnails/poster_big_buck_bunny.jpg',
         'genre': 'drama',
         'rating': 7.3,
         'year': 1999,
@@ -148,7 +121,6 @@ KANNADA_MOVIES = [
         'title': 'Keralida Simha',
         'description': 'Kannada action.',
         'video_url': 'https://www.youtube.com/watch?v=7UGBwGznSpU',
-        'thumbnail': f'thumbnails/poster_elephants_dream.jpg',
         'genre': 'action',
         'rating': 6.8,
         'year': 1981,
@@ -159,7 +131,6 @@ KANNADA_MOVIES = [
         'title': 'Jeevnane Natka Samy',
         'description': 'Kannada comedy.',
         'video_url': 'https://www.youtube.com/watch?v=4PmggNjJ8cc',
-        'thumbnail': f'thumbnails/poster_sintel.jpg',
         'genre': 'comedy',
         'rating': 7.1,
         'year': 2013,
@@ -170,7 +141,6 @@ KANNADA_MOVIES = [
         'title': 'Mavana Magalu',
         'description': 'Kannada family drama.',
         'video_url': 'https://www.youtube.com/watch?v=IQqGVRrtLxM',
-        'thumbnail': f'thumbnails/thumbnail_elephants_dream.jpg',
         'genre': 'drama',
         'rating': 7.5,
         'year': 2016,
@@ -181,7 +151,6 @@ KANNADA_MOVIES = [
         'title': 'Beat',
         'description': 'Kannada youth movie.',
         'video_url': 'https://www.youtube.com/watch?v=WkMogjriz9I',
-        'thumbnail': f'thumbnails/thumbnail_big_buck_bunny.jpg',
         'genre': 'drama',
         'rating': 7.2,
         'year': 2008,
@@ -192,7 +161,6 @@ KANNADA_MOVIES = [
         'title': 'Harom Hara',
         'description': 'Kannada action thriller.',
         'video_url': 'https://www.youtube.com/watch?v=idFFYxiZurc',
-        'thumbnail': f'thumbnails/poster_tears_of_steel.jpg',
         'genre': 'action',
         'rating': 7.4,
         'year': 2024,
@@ -202,10 +170,10 @@ KANNADA_MOVIES = [
 ]
 
 class Command(BaseCommand):
-    help = 'Seed Kannada movies with YouTube embeds'
+    help = 'Seed Kannada movies with YouTube embeds - reliable thumbs/videos'
 
     def handle(self, *args, **options):
-        self.stdout.write('Seeding Kannada movies...')
+        self.stdout.write('Seeding Kannada movies with YouTube thumbnails...')
         
         Movie.objects.all().delete()
         self.stdout.write('Cleared existing movies')
@@ -214,10 +182,10 @@ class Command(BaseCommand):
             movie = Movie.objects.create(
                 **movie_info
             )
-            self.stdout.write(self.style.SUCCESS(f'Created: {movie.title} ({movie.genre}) - {movie.video_url}'))
+            thumb = movie.poster_url
+            self.stdout.write(self.style.SUCCESS(f'Created: {movie.title} ({movie.genre}) - {movie.video_url} - Thumb: {thumb}'))
         
         total = Movie.objects.count()
-        self.stdout.write(self.style.SUCCESS(f'\nTotal Kannada movies: {total}'))
-        self.stdout.write('Googly is hero banner. YouTube embeds ready.')
-
+        self.stdout.write(self.style.SUCCESS(f'\nTotal movies: {total} - Thumbs from YouTube hqdefault'))
+        self.stdout.write('Googly featured. Reload server page to see.')
 
